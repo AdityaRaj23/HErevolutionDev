@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Search</title>
+    <!-- Include Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Custom CSS for suggestions dropdown */
+        .suggestion-item {
+            padding: 0.5rem;
+            cursor: pointer;
+        }
+        .suggestion-item:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 py-8 px-4">
+    <div class="max-w-md mx-auto">
+        <!-- Starting Location Input -->
+        <div class="relative">
+            <input id="startingLocation" type="text" placeholder="Starting Location" class="w-full py-2 px-4 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+            <div id="startingSuggestions" class="absolute z-10 bg-white border border-gray-300 w-full mt-1 rounded-b-md shadow-lg hidden"></div>
+        </div>
+        <!-- Ending Location Input -->
+        <div class="relative mt-4">
+            <input id="endingLocation" type="text" placeholder="Ending Location" class="w-full py-2 px-4 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
+            <div id="endingSuggestions" class="absolute z-10 bg-white border border-gray-300 w-full mt-1 rounded-b-md shadow-lg hidden"></div>
+        </div>
+    </div>
+
+    <!-- JavaScript code -->
+    <script>
+        const startingInput = document.getElementById('startingLocation');
+        const endingInput = document.getElementById('endingLocation');
+        const startingSuggestionsList = document.getElementById('startingSuggestions');
+        const endingSuggestionsList = document.getElementById('endingSuggestions');
+        const apiUrl = 'https://autosuggest.search.hereapi.com/v1/autosuggest';
+        const apiKey = 'RnT7OP_hdKMQVJ90vdrXuMMfGvfJEgibHgBoVf1_pPo';
+        const loc = '28.749472,77.0561';
+        const language = 'en';
+        const limit = 5;
+        const termsLimit = 3;
+
+        // Function to fetch suggestions
+        function fetchSuggestions(input, suggestionsList) {
+            const query = input.value.trim();
+            if (query.length === 0) {
+                suggestionsList.innerHTML = '';
+                return;
+            }
+            const url = `${apiUrl}?q=${query}&at=${loc}&lang=${language}&limit=${limit}&termsLimit=${termsLimit}&apiKey=${apiKey}`;
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Clear previous suggestions
+                    suggestionsList.innerHTML = '';
+
+                    // Extract suggestions from the response and add them to the suggestions list
+                    data.items.forEach(item => {
+                        // Create a div element for each suggestion
+                        const suggestionDiv = document.createElement('div');
+                        suggestionDiv.textContent = item.title;
+        
+                        // Add a class to the suggestion div
+                        suggestionDiv.classList.add('suggestion-item');
+
+                        // Handle suggestion selection
+                        suggestionDiv.addEventListener('click', () => {
+                            // Log selected data to console
+                            console.log('Selected:', item.position, item.title);
+                            // Display selected data in the input box
+                            input.value = item.title;
+                            // Hide suggestions dropdown
+                            suggestionsList.classList.add('hidden');
+                        });
+
+                        // Append the suggestion div to the suggestions list container
+                        suggestionsList.appendChild(suggestionDiv);
+                    });
+                    suggestionsList.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('There was a problem with your fetch operation:', error);
+                });
+        }
+
+        // Event listener for starting location input
+        startingInput.addEventListener('input', function () {
+            fetchSuggestions(startingInput, startingSuggestionsList);
+        });
+
+        // Event listener for ending location input
+        endingInput.addEventListener('input', function () {
+            fetchSuggestions(endingInput, endingSuggestionsList);
+        });
+    </script>
+</body>
+</html>
