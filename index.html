@@ -6,6 +6,9 @@
     <title>Location Search</title>
     <!-- Include Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
     <style>
         /* Custom CSS for suggestions dropdown */
         .suggestion-item {
@@ -14,6 +17,16 @@
         }
         .suggestion-item:hover {
             background-color: #f3f4f6;
+        }
+    </style>
+    <style>
+        /* Define CSS styles for the map container */
+        #mapContainer {
+            width: 100%;
+            height: 400px;
+            /* Adjust height as needed */
+            background: grey;
+            /* Fallback background color */
         }
     </style>
 </head>
@@ -31,6 +44,8 @@
         </div>
     </div>
 
+    <div id="mapContainer" class="my-3"></div>
+
     <!-- JavaScript code -->
     <script>
         const startingInput = document.getElementById('startingLocation');
@@ -45,63 +60,213 @@
         const termsLimit = 3;
 
         // Function to fetch suggestions
-        function fetchSuggestions(input, suggestionsList) {
-            const query = input.value.trim();
-            if (query.length === 0) {
-                suggestionsList.innerHTML = '';
-                return;
+function fetchStartingSuggestions(input, suggestionsList) {
+    const query = input.value.trim();
+    if (query.length === 0) {
+        suggestionsList.innerHTML = '';
+        return;
+    }
+    const url = `${apiUrl}?q=${query}&at=${loc}&lang=${language}&limit=${limit}&termsLimit=${termsLimit}&apiKey=${apiKey}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-            const url = `${apiUrl}?q=${query}&at=${loc}&lang=${language}&limit=${limit}&termsLimit=${termsLimit}&apiKey=${apiKey}`;
+            return response.json();
+        })
+        .then(data => {
+            // Clear previous suggestions
+            suggestionsList.innerHTML = '';
 
-            fetch(url)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    // Clear previous suggestions
-                    suggestionsList.innerHTML = '';
+            // Extract suggestions from the response and add them to the suggestions list
+            data.items.forEach(item => {
+                // Create a div element for each suggestion
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.textContent = item.title;
+    
+                // Add a class to the suggestion div
+                suggestionDiv.classList.add('suggestion-item');
 
-                    // Extract suggestions from the response and add them to the suggestions list
-                    data.items.forEach(item => {
-                        // Create a div element for each suggestion
-                        const suggestionDiv = document.createElement('div');
-                        suggestionDiv.textContent = item.title;
-        
-                        // Add a class to the suggestion div
-                        suggestionDiv.classList.add('suggestion-item');
+                // Handle suggestion selection
+                suggestionDiv.addEventListener('click', () => {
+                    // Log selected data to console
+                    console.log('Selected:', item.position, item.title);
 
-                        // Handle suggestion selection
-                        suggestionDiv.addEventListener('click', () => {
-                            // Log selected data to console
-                            console.log('Selected:', item.position, item.title);
-                            // Display selected data in the input box
-                            input.value = item.title;
-                            // Hide suggestions dropdown
-                            suggestionsList.classList.add('hidden');
-                        });
-
-                        // Append the suggestion div to the suggestions list container
-                        suggestionsList.appendChild(suggestionDiv);
-                    });
-                    suggestionsList.classList.remove('hidden');
-                })
-                .catch(error => {
-                    console.error('There was a problem with your fetch operation:', error);
+                    origin = item.position;
+                    // Display selected data in the input box
+                    input.value = item.title;
+                    // Hide suggestions dropdown
+                    suggestionsList.classList.add('hidden');
                 });
-        }
+
+                // Append the suggestion div to the suggestions list container
+                suggestionsList.appendChild(suggestionDiv);
+            });
+            suggestionsList.classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('There was a problem with your fetch operation:', error);
+        });
+}
+
+function fetchEndingSuggestions(input, suggestionsList) {
+    const query = input.value.trim();
+    if (query.length === 0) {
+        suggestionsList.innerHTML = '';
+        return;
+    }
+    const url = `${apiUrl}?q=${query}&at=${loc}&lang=${language}&limit=${limit}&termsLimit=${termsLimit}&apiKey=${apiKey}`;
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Clear previous suggestions
+            suggestionsList.innerHTML = '';
+
+            // Extract suggestions from the response and add them to the suggestions list
+            data.items.forEach(item => {
+                // Create a div element for each suggestion
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.textContent = item.title;
+    
+                // Add a class to the suggestion div
+                suggestionDiv.classList.add('suggestion-item');
+
+                // Handle suggestion selection
+                suggestionDiv.addEventListener('click', () => {
+                    // Log selected data to console
+                    console.log('Selected:', item.position, item.title);
+
+                    destination = item.position;
+                    // Display selected data in the input box
+                    input.value = item.title;
+                    // Hide suggestions dropdown
+                    suggestionsList.classList.add('hidden');
+                });
+
+                // Append the suggestion div to the suggestions list container
+                suggestionsList.appendChild(suggestionDiv);
+            });
+            suggestionsList.classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('There was a problem with your fetch operation:', error);
+        });
+}
+
+        let origin = {lat: 28.73982, lng: 77.12112};
+        let destination = {lat: 28.70665, lng: 77.16478};
 
         // Event listener for starting location input
         startingInput.addEventListener('input', function () {
-            fetchSuggestions(startingInput, startingSuggestionsList);
+            fetchStartingSuggestions(startingInput, startingSuggestionsList);
         });
 
         // Event listener for ending location input
         endingInput.addEventListener('input', function () {
-            fetchSuggestions(endingInput, endingSuggestionsList);
+            fetchEndingSuggestions(endingInput, endingSuggestionsList);
         });
+
+        
+        // Initiate and authenticate your connection to the HERE platform:
+        const platform = new H.service.Platform({
+            'apikey': 'IWkZZG8yg7_sabfcdfXNKPSM5vnzmShxTHVPipi99XE'
+        });
+
+        // Obtain the default map types from the platform object:
+        const defaultLayers = platform.createDefaultLayers();
+
+        // Instantiate (and display) a map:
+        // Zoom and center parameters are overriden by the bounding box
+        // that contains the route and marker objects
+        const map = new H.Map(
+            document.getElementById("mapContainer"),
+            defaultLayers.vector.normal.map, {
+            zoom: 7,
+            center: { lat: 56.97, lng: 24.09 },
+            // Add space around the map edges to ensure markers are not cut off:
+            padding: { top: 50, right: 50, bottom: 50, left: 50 }
+        });
+
+        
+
+        // Create the parameters for the routing request:
+        const routingParameters = {
+            'routingMode': 'fast',
+            'transportMode': 'car',
+            // The start point of the route:
+            'origin': `${origin.lat},${origin.lng}`,
+            // The end point of the route:
+            'destination': `${destination.lat},${destination.lng}`,
+            // Include the route shape in the response
+            'return': 'polyline',
+        };
+
+        // Define a callback function to process the routing response:
+        const onResult = function (result) {
+            // Ensure that at least one route was found
+            if (result.routes.length) {
+                const lineStrings = [];
+                result.routes[0].sections.forEach((section) => {
+                    // Create a linestring to use as a point source for the route line
+                    lineStrings.push(H.geo.LineString.fromFlexiblePolyline(section.polyline));
+                });
+
+                // Create an instance of H.geo.MultiLineString
+                const multiLineString = new H.geo.MultiLineString(lineStrings);
+
+                // Create a polyline to display the route:
+                const routeLine = new H.map.Polyline(multiLineString, {
+                    style: {
+                        strokeColor: 'blue',
+                        lineWidth: 3
+                    }
+                });
+
+                // Create a marker for the start point:
+                const startMarker = new H.map.Marker(origin);
+
+                // Create a marker for the end point:
+                const endMarker = new H.map.Marker(destination);
+
+                // Create a H.map.Group to hold all the map objects and enable us to obtain 
+                // the bounding box that contains all its objects within
+                const group = new H.map.Group();
+                group.addObjects([routeLine, startMarker, endMarker]);
+                // Add the group to the map
+                map.addObject(group);
+
+                // Set the map viewport to make the entire route visible:
+                map.getViewModel().setLookAtData({
+                    bounds: group.getBoundingBox()
+                });
+            };
+        };
+
+        // Get an instance of the routing service version 8:
+        const router = platform.getRoutingService(null, 8);
+
+        // Call the calculateRoute() method with the routing parameters,
+        // the callback, and an error callback function (called if a
+        // communication error occurs):
+        router.calculateRoute(routingParameters, onResult,
+            function (error) {
+                alert(error.message);
+            });
+
+        // MapEvents enables the event system.
+        // The behavior variable implements default interactions for pan/zoom (also on mobile touch environments).
+        const behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+
+        // Enable dynamic resizing of the map, based on the current size of the enclosing container
+        window.addEventListener('resize', () => map.getViewPort().resize());
+
     </script>
 </body>
 </html>
