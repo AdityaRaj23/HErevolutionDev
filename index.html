@@ -42,6 +42,8 @@
             <input id="endingLocation" type="text" placeholder="Ending Location" class="w-full py-2 px-4 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500">
             <div id="endingSuggestions" class="absolute z-10 bg-white border border-gray-300 w-full mt-1 rounded-b-md shadow-lg hidden"></div>
         </div>
+
+        <div class="relative mt-4"><button button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800" onclick="route()">Submit</button></div>
     </div>
 
     <div id="mapContainer" class="my-3"></div>
@@ -92,7 +94,7 @@ function fetchStartingSuggestions(input, suggestionsList) {
                 suggestionDiv.addEventListener('click', () => {
                     // Log selected data to console
                     console.log('Selected:', item.position, item.title);
-
+                
                     origin = item.position;
                     // Display selected data in the input box
                     input.value = item.title;
@@ -160,11 +162,8 @@ function fetchEndingSuggestions(input, suggestionsList) {
         });
 }
 
-        let origin = {lat: 28.73982, lng: 77.12112};
-        let destination = {lat: 28.70665, lng: 77.16478};
-
-        // Event listener for starting location input
-        startingInput.addEventListener('input', function () {
+    // Event listener for starting location input
+    startingInput.addEventListener('input', function () {
             fetchStartingSuggestions(startingInput, startingSuggestionsList);
         });
 
@@ -173,7 +172,7 @@ function fetchEndingSuggestions(input, suggestionsList) {
             fetchEndingSuggestions(endingInput, endingSuggestionsList);
         });
 
-        
+     
         // Initiate and authenticate your connection to the HERE platform:
         const platform = new H.service.Platform({
             'apikey': 'IWkZZG8yg7_sabfcdfXNKPSM5vnzmShxTHVPipi99XE'
@@ -193,9 +192,12 @@ function fetchEndingSuggestions(input, suggestionsList) {
             // Add space around the map edges to ensure markers are not cut off:
             padding: { top: 50, right: 50, bottom: 50, left: 50 }
         });
+        grp=new H.map.Group();
+        map.addObject(grp)
+        prevgroup=grp
 
-        
-
+function route() {
+        console.log(origin,destination);
         // Create the parameters for the routing request:
         const routingParameters = {
             'routingMode': 'fast',
@@ -241,7 +243,9 @@ function fetchEndingSuggestions(input, suggestionsList) {
                 group.addObjects([routeLine, startMarker, endMarker]);
                 // Add the group to the map
                 map.addObject(group);
-
+                map.removeObject(prevgroup);
+                prevgroup=group;
+        
                 // Set the map viewport to make the entire route visible:
                 map.getViewModel().setLookAtData({
                     bounds: group.getBoundingBox()
@@ -266,7 +270,7 @@ function fetchEndingSuggestions(input, suggestionsList) {
 
         // Enable dynamic resizing of the map, based on the current size of the enclosing container
         window.addEventListener('resize', () => map.getViewPort().resize());
-
+}
     </script>
 </body>
 </html>
