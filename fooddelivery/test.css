@@ -1,0 +1,12 @@
+/* Css reset  */
+ *{
+    padding : 0px;
+    margin : 0px;
+ }
+
+ /* navigation bar  */
+
+#navbar{
+    display : flex;
+    
+}
