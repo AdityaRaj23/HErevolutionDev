@@ -172,8 +172,6 @@ function fetchEndingSuggestions(input, suggestionsList) {
             fetchEndingSuggestions(endingInput, endingSuggestionsList);
         });
 
-function route() {
-        console.log(origin,destination);
      
         // Initiate and authenticate your connection to the HERE platform:
         const platform = new H.service.Platform({
@@ -194,9 +192,12 @@ function route() {
             // Add space around the map edges to ensure markers are not cut off:
             padding: { top: 50, right: 50, bottom: 50, left: 50 }
         });
+        grp=new H.map.Group();
+        map.addObject(grp)
+        prevgroup=grp
 
-        
-
+function route() {
+        console.log(origin,destination);
         // Create the parameters for the routing request:
         const routingParameters = {
             'routingMode': 'fast',
@@ -242,7 +243,9 @@ function route() {
                 group.addObjects([routeLine, startMarker, endMarker]);
                 // Add the group to the map
                 map.addObject(group);
-
+                map.removeObject(prevgroup);
+                prevgroup=group;
+        
                 // Set the map viewport to make the entire route visible:
                 map.getViewModel().setLookAtData({
                     bounds: group.getBoundingBox()
